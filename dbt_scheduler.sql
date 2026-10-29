@@ -1,0 +1,29 @@
+USE ROLE ACCOUNTADMIN;
+USE WAREHOUSE DBT_WH;
+USE DATABASE ANALYTICS;
+
+GRANT USAGE, CREATE TASK ON SCHEMA ANALYTICS.PUBLIC TO ROLE DBT_ROLE;
+GRANT OWNERSHIP ON DBT PROJECT ANALYTICS.RAW.SALES_ANALYTICS TO ROLE DBT_ROLE REVOKE CURRENT GRANTS;
+
+USE ROLE ACCOUNTADMIN;
+
+GRANT USAGE, CREATE TABLE, CREATE SNAPSHOT ON SCHEMA ANALYTICS.MARTS TO ROLE DBT_ROLE;
+
+-- Then run as DBT_ROLE:
+USE ROLE DBT_ROLE;
+
+SHOW DBT PROJECTS;
+
+-- Deploy the project (if not deployed via the Snowsight Workspace UI)
+-- and test running it in production target:
+EXECUTE DBT PROJECT ANALYTICS.MARTS.SALES_ANALYTICS ARGS = 'build --target prod';
+
+-- Create a Snowflake Task to run the dbt project daily
+CREATE OR REPLACE TASK run_sales_analytics_daily
+  WAREHOUSE = DBT_WH
+  SCHEDULE = 'USING CRON 0 0 * * * UTC'
+AS
+  EXECUTE DBT PROJECT ANALYTICS.MARTS.SALES_ANALYTICS ARGS = 'build --target prod';
+
+-- Resume the task, let it run once, then suspend to save credits
+ALTER TASK run_sales_analytics_daily RESUME;
