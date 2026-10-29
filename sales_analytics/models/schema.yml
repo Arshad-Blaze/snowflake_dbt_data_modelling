@@ -1,0 +1,23 @@
+version: 2
+
+models:
+  - name: dim_regions
+    description: "Dimension table for geographic regions."
+    columns:
+      - name: region_key
+        tests:
+          - unique
+          - not_null
+      - name: region_name
+        tests:
+          - not_null
+
+  - name: fct_order_lines
+    description: "Fact table containing order line items enriched with customer and geography details."
+    columns:
+      - name: order_key
+        tests:
+          - not_null
+      - name: net_revenue
+        tests:
+          - not_null
